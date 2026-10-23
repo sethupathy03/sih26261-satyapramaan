@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  satyapramaan-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: satyapramaan-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - WEIGHT_FORENSIC=0.40
+      - WEIGHT_OCR=0.20
+      - WEIGHT_REGISTRY=0.40
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
+    restart: unless-stopped
