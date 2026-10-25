@@ -1,38 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import ApplicantPortal from './components/ApplicantPortal';
 import AdminDashboard from './components/AdminDashboard';
 import RegistryExplorer from './components/RegistryExplorer';
+import BackendConnectModal from './components/BackendConnectModal';
+import { fetchApplications as apiFetchApplications } from './apiService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('admin'); // default to admin view to showcase the side-by-side comparison
   const [applications, setApplications] = useState([]);
   const [selectedAppId, setSelectedAppId] = useState(null);
   const [backendOnline, setBackendOnline] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const fetchApplications = async () => {
-    try {
-      const res = await fetch('/api/v1/applications');
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(data);
-        setBackendOnline(true);
-        if (!selectedAppId && data.length > 0) {
-          setSelectedAppId(data[0].id);
-        }
-      } else {
-        setBackendOnline(false);
-      }
-    } catch (err) {
-      setBackendOnline(false);
+  const loadApplications = useCallback(async () => {
+    const { data, isLive } = await apiFetchApplications();
+    setApplications(data);
+    setBackendOnline(isLive);
+    if (data && data.length > 0) {
+      setSelectedAppId(prev => {
+        if (!prev) return data[0].id;
+        const exists = data.some(a => a.id === prev);
+        return exists ? prev : data[0].id;
+      });
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchApplications();
-    const interval = setInterval(fetchApplications, 5000);
+    loadApplications();
+    // Poll gently every 10 seconds without aggressive error logs
+    const interval = setInterval(loadApplications, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadApplications]);
 
   const handleSelectApplicationForReview = (appId) => {
     setSelectedAppId(appId);
@@ -45,13 +44,15 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         backendOnline={backendOnline}
+        onOpenBackendSettings={() => setIsSettingsOpen(true)}
       />
 
       <main style={{ flex: 1 }}>
         {activeTab === 'applicant' && (
           <ApplicantPortal
             onSelectApplicationForReview={handleSelectApplicationForReview}
-            refreshGlobalData={fetchApplications}
+            refreshGlobalData={loadApplications}
+            isLiveMode={backendOnline}
           />
         )}
 
@@ -60,14 +61,22 @@ export default function App() {
             applications={applications}
             selectedAppId={selectedAppId}
             setSelectedAppId={setSelectedAppId}
-            refreshData={fetchApplications}
+            refreshData={loadApplications}
+            isLiveMode={backendOnline}
           />
         )}
 
         {activeTab === 'registry' && (
-          <RegistryExplorer />
+          <RegistryExplorer isLiveMode={backendOnline} />
         )}
       </main>
+
+      <BackendConnectModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        isLiveMode={backendOnline}
+        onConnectionChange={loadApplications}
+      />
 
       <footer style={{
         textAlign: 'center',

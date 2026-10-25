@@ -4,8 +4,10 @@ import {
   Sliders, Eye, Stamp, PenTool, Check, FileText, UserCheck,
   Clock, Hash, ArrowUpRight, Search, RefreshCw
 } from 'lucide-react';
+import { getImageUrl } from '../config';
+import { submitReviewDecision } from '../apiService';
 
-export default function AdminDashboard({ applications, selectedAppId, setSelectedAppId, refreshData }) {
+export default function AdminDashboard({ applications = [], selectedAppId, setSelectedAppId, refreshData, isLiveMode = false }) {
   const [filterRisk, setFilterRisk] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocIndex, setSelectedDocIndex] = useState(0);
@@ -40,15 +42,13 @@ export default function AdminDashboard({ applications, selectedAppId, setSelecte
     if (!activeApp) return;
     setActionLoading(true);
     try {
-      await fetch(`/api/v1/review-decision/${activeApp.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          decision,
-          remarks: officerRemarks || `Officer reviewed and marked as ${decision}.`,
-          officer_name: 'Lead_Scrutiny_Officer'
-        })
-      });
+      await submitReviewDecision(
+        activeApp.id,
+        decision,
+        officerRemarks || `Officer reviewed and marked as ${decision}.`,
+        'Lead_Scrutiny_Officer',
+        isLiveMode
+      );
       setOfficerRemarks('');
       if (refreshData) refreshData();
     } catch (err) {
@@ -334,7 +334,7 @@ export default function AdminDashboard({ applications, selectedAppId, setSelecte
                 }}>
                   {inspectorMode === 'original' && (
                     <img
-                      src={activeDoc.file_url}
+                      src={getImageUrl(activeDoc.file_url)}
                       alt="Original Document"
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
@@ -342,7 +342,7 @@ export default function AdminDashboard({ applications, selectedAppId, setSelecte
 
                   {inspectorMode === 'ela' && (
                     <img
-                      src={activeDoc.forensic_report?.ela_heatmap_url || activeDoc.file_url}
+                      src={getImageUrl(activeDoc.forensic_report?.ela_heatmap_url || activeDoc.file_url)}
                       alt="ELA Heatmap"
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
@@ -352,13 +352,13 @@ export default function AdminDashboard({ applications, selectedAppId, setSelecte
                     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                       {/* Base Original */}
                       <img
-                        src={activeDoc.file_url}
+                        src={getImageUrl(activeDoc.file_url)}
                         alt="Original"
                         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                       />
                       {/* Overlay Heatmap with adjustable opacity */}
                       <img
-                        src={activeDoc.forensic_report?.ela_heatmap_url || activeDoc.file_url}
+                        src={getImageUrl(activeDoc.forensic_report?.ela_heatmap_url || activeDoc.file_url)}
                         alt="ELA Heatmap Overlay"
                         style={{
                           position: 'absolute',

@@ -1,7 +1,10 @@
 import React from 'react';
-import { ShieldCheck, UserCheck, LayoutDashboard, Database, Activity } from 'lucide-react';
+import { ShieldCheck, UserCheck, LayoutDashboard, Database, Activity, Server, Settings } from 'lucide-react';
+import { getApiBaseUrl } from '../config';
 
-export default function Navbar({ activeTab, setActiveTab, backendOnline }) {
+export default function Navbar({ activeTab, setActiveTab, backendOnline, onOpenBackendSettings }) {
+  const activeBaseUrl = getApiBaseUrl();
+
   return (
     <header style={{
       borderBottom: '1px solid rgba(255,255,255,0.08)',
@@ -17,7 +20,9 @@ export default function Navbar({ activeTab, setActiveTab, backendOnline }) {
         margin: '0 auto',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px'
       }}>
         {/* Logo & System Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -129,29 +134,36 @@ export default function Navbar({ activeTab, setActiveTab, backendOnline }) {
           </button>
         </nav>
 
-        {/* Backend Status indicator */}
+        {/* Backend Status indicator & Configuration button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.78rem',
-            padding: '5px 12px',
-            borderRadius: '20px',
-            background: backendOnline ? 'rgba(16, 185, 129, 0.12)' : 'rgba(244, 63, 94, 0.12)',
-            color: backendOnline ? '#34d399' : '#fb7185',
-            border: `1px solid ${backendOnline ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.25)'}`
-          }}>
+          <button
+            onClick={onOpenBackendSettings}
+            title="Click to view/change Backend API connection"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.78rem',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              background: backendOnline ? 'rgba(16, 185, 129, 0.12)' : 'rgba(56, 189, 248, 0.12)',
+              color: backendOnline ? '#34d399' : '#38bdf8',
+              border: `1px solid ${backendOnline ? 'rgba(16, 185, 129, 0.3)' : 'rgba(56, 189, 248, 0.3)'}`
+            }}
+          >
             <span style={{
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              backgroundColor: backendOnline ? '#10b981' : '#f43f5e',
-              boxShadow: backendOnline ? '0 0 8px #10b981' : '0 0 8px #f43f5e'
+              backgroundColor: backendOnline ? '#10b981' : '#38bdf8',
+              boxShadow: backendOnline ? '0 0 8px #10b981' : '0 0 8px #38bdf8'
             }} />
             <Activity size={13} />
-            {backendOnline ? 'Backend API Active (Port 8000)' : 'Connecting to API...'}
-          </div>
+            {backendOnline ? 'Live Backend Connected' : 'Demo Mode (Click to Connect API)'}
+            <Settings size={12} style={{ marginLeft: '4px', opacity: 0.7 }} />
+          </button>
         </div>
       </div>
     </header>

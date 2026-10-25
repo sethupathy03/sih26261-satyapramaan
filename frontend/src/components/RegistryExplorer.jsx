@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Database, ShieldCheck, CheckCircle2, AlertOctagon, Search } from 'lucide-react';
+import { fetchRegistryRecords } from '../apiService';
 
-export default function RegistryExplorer() {
+export default function RegistryExplorer({ isLiveMode = false }) {
   const [records, setRecords] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/v1/registry/records')
-      .then(res => res.json())
-      .then(data => {
-        setRecords(data);
+    let active = true;
+    fetchRegistryRecords(isLiveMode).then(({ data }) => {
+      if (active) {
+        setRecords(data || []);
         setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, []);
+      }
+    });
+    return () => { active = false; };
+  }, [isLiveMode]);
 
   const filtered = records.filter(r =>
     r.full_name?.toLowerCase().includes(search.toLowerCase()) ||
